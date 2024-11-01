@@ -7,11 +7,15 @@ import (
 )
 
 type client chan<- string
+type message struct {
+	message string
+	cli chan string
+}
 
 var (
 	entering = make(chan chan<- string)
 	leaving = make(chan client)
-	messages = make(chan string)
+	messages = make(chan message)
 )
 
 func Broadcaster() {
@@ -20,7 +24,9 @@ func Broadcaster() {
 		select {
 			case msg := <-messages:
 				for cli := range clients {
-					cli <- msg
+					if msg.cli != cli {
+						cli <- msg.message
+					}
 				}
 			case cli := <-entering:
 				clients[cli] = true
@@ -37,16 +43,16 @@ func HandleConn(conn net.Conn) {
 
 	who := conn.RemoteAddr().String()
 	ch <- "You are " + who
-	messages <- who + " has arrived"
+	messages <- message{ message: who + " has arrived", cli: ch } 
 	entering <- ch
 
 	input := bufio.NewScanner(conn)
 	for input.Scan() {
-		messages <- who + ": " + input.Text()
+		messages <- message{ message: who + ": " + input.Text(), cli: ch } 
 	}
 
 	leaving <- ch
-	messages <- who + " has left"
+	messages <- message{ message: who + " has left", cli: ch } 
 	conn.Close()
 }
 
