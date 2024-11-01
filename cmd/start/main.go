@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -16,9 +15,7 @@ func main() {
 
 	go broadcast.Broadcaster()
 	for {
-		fmt.Println("aguardando client")
 		conn, err := listener.Accept()
-		fmt.Println("client conectado")
 		if err != nil {
 			log.Print(err)
 			continue
